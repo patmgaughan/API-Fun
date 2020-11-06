@@ -1,0 +1,300 @@
+<!doctype html>
+<html>
+<head>
+	<title>API Fun</title>
+	<meta charset="utf-8"/>
+	<link rel="stylesheet" type="text/css" href="API_fun.css">
+	<script>
+
+
+		//Country Object used for each country and it's Covid Stats
+		function Country(name, newConfirm, totalConfirm, newDeath, totalDeath, newRecovered, totalRecovered) {
+			this.name = name;
+
+  			this.newConfirm = newConfirm;
+  			this.newDeath = newDeath;
+  			this.newRecovered = newRecovered;
+
+  			this.totalConfirm = totalConfirm;
+  			this.totalDeath = totalDeath;
+  			this.totalRecovered = totalRecovered;
+
+  			this.display = function() {
+    			return "<li><h2>" + this.name + "</h2> Total Confirmed Cases: " + 
+    			        this.totalConfirm.toLocaleString()  + "<br> Total Deaths: " + this.totalDeath.toLocaleString() + 
+    			         "<br> Total Recovered: " + this.totalRecovered.toLocaleString() + "</li>";
+  			}
+
+  			this.displayNew = function() {
+    			return "<li><h2>" + this.name + "</h2> New Confirmed Cases: " + 
+    			        this.newConfirm.toLocaleString()  + "<br> New Deaths: " + this.newDeath.toLocaleString() + 
+    			         "<br> New Recovered: " + this.newRecovered.toLocaleString() + "</li>";
+  			}
+		}
+
+		//Global Variables
+		var countries = new Array();
+		var allNames = new Array();
+
+
+		//Requests and Gets the API
+		//Sends the JSON file to be sorted
+		function getData() {
+
+			/* Step 1: Make instance of request object...
+			...to make HTTP request after page is loaded*/
+			request = new XMLHttpRequest();
+			console.log("1 - request object created");
+ 
+			// Step 2: Set the URL for the AJAX request to be the JSON file
+ 
+		request.open("GET", "https://api.covid19api.com/summary", true)
+
+			console.log("2 - opened request file");
+ 
+			// Step 3: set up event handler/callback
+
+			request.onreadystatechange = function() {
+				console.log("3 - readystatechange event fired.");
+ 
+				if (request.readyState == 4 && request.status == 200) {
+
+					// Step 5: wait for done + success
+					console.log("5 - response received");
+					result = request.responseText;
+					//alert(result);
+					data = JSON.parse(result);
+					fillCountryArray(data);
+					
+				}
+				else if (request.readyState == 4 && request.status != 200) {
+
+					document.getElementById("data").innerHTML = "Something is wrong!  Check the logs to see where this went off the rails";
+
+				}
+
+				else if (request.readyState == 3) {
+
+					document.getElementById("data").innerHTML = "Too soon!  Try again";
+
+				}
+
+			}
+		// Step 4: fire off the HTTP request
+			request.send();
+			console.log("4 - Request sent");
+		}
+
+		//takes the JSON object from the API and adds it to an array of Country Objects
+		function fillCountryArray(data) {
+
+
+			for(i in data["Countries"]){
+
+				countryName = data["Countries"][i]["Country"];
+
+				newConfirm = data["Countries"][i]["NewConfirmed"];
+  				newDeath = data["Countries"][i]["NewDeaths"];
+  				newRecovered = data["Countries"][i]["NewRecovered"];
+
+  				totalConfirm = data["Countries"][i]["TotalConfirmed"];
+  				totalDeath = data["Countries"][i]["TotalDeaths"];
+  				totalRecovered = data["Countries"][i]["TotalRecovered"];
+
+  				country = new Country(countryName, newConfirm, totalConfirm, newDeath, totalDeath, newRecovered, totalRecovered);
+
+			 	countries.push(country);
+
+			}
+
+			sortArray();
+
+
+		}
+
+		//displays the information, either the Total or New Statistics
+		//The type will always be expected Total or New
+		function displayAs(type) {
+			section = document.getElementById("data");
+			section.innerHTML = "";
+
+			section.innerHTML += type + " Confiremed Covid Cases: " + data["Global"][type + "Confirmed"].toLocaleString() + "<br>";
+
+			section.innerHTML += type + " Deaths: " + data["Global"][type + "Deaths"].toLocaleString() + "<br>";
+
+			section.innerHTML += type + " Recovered: " + data["Global"][type + "Recovered"].toLocaleString() + "<br>";
+
+			for(i = 0; i < countries.length; i++){
+				if(type == "New"){
+					section.innerHTML += countries[i].displayNew();
+				}else{
+					section.innerHTML += countries[i].display();
+				}
+			}
+		}
+
+		//sorts the countries based on the values from the form
+		//Note: I know there is a much more efficent way to do this
+		//      but I had difficutly figuring it out.
+		function sortArrayHelper(newOrTotal, byMost, orderBy) {
+
+			if(newOrTotal == "New" && orderBy == "Confirm"){
+
+				countries.sort((a, b) => {
+					if(byMost == true){
+						return b.newConfirm - a.newConfirm;
+					}else{
+						return a.newConfirm - b.newConfirm;
+					}
+				});
+
+			}else if(newOrTotal == "Total" && orderBy == "Confirm"){
+
+				countries.sort((a, b) => {
+     				if(byMost == true){
+						return b.totalConfirm - a.totalConfirm;
+					}else{
+						return a.totalConfirm - b.totalConfirm;
+					}
+				});
+
+			}else if(newOrTotal == "New" && orderBy == "Deaths"){
+
+				countries.sort((a, b) => {
+
+     				if(byMost == true){
+						return b.newDeath - a.newDeath;
+					}else{
+						return a.newDeath - b.newDeath;
+					}
+				});
+
+			}else if(newOrTotal == "Total" && orderBy == "Deaths"){
+
+				countries.sort((a, b) => {
+     				if(byMost == true){
+						return b.totalDeath - a.totalDeath;
+					}else{
+						return a.totalDeath - b.totalDeath;
+					}
+				});
+
+			}else if(newOrTotal == "New" && orderBy == "Recovered"){
+
+				countries.sort((a, b) => {
+     				if(byMost == true){
+						return b.newRecovered - a.newRecovered;
+					}else{
+						return a.newRecovered - b.newRecovered;
+					}
+				});
+
+			}else if(newOrTotal == "Total" && orderBy == "Recovered"){
+
+				countries.sort((a, b) => {
+     				if(byMost == true){
+						return b.totalRecovered - a.totalRecovered;
+					}else{
+						return a.totalRecovered - b.totalRecovered;
+					}
+				});
+
+			}
+
+			displayAs(newOrTotal);
+		}
+
+		//gets values from the form to decide how the information should be displayed
+		function sortArray() {
+			a = document.getElementsByName("new/total");
+			b = document.getElementsByName("orderFrom");
+			c = document.getElementsByName("orderBy");
+
+			var newOrTotal = "New";
+			var byMost = false;
+			var orderBy = "Recovered";
+
+			if(a[0].checked == true){
+				newOrTotal = "Total";
+			}
+
+			if(b[0].checked == true){
+				byMost = true;
+			}
+
+			if(c[0].checked == true){
+				orderBy = "Confirm";
+			}else if(c[1].checked == true){
+				orderBy = "Deaths";
+			}
+
+			sortArrayHelper(newOrTotal, byMost, orderBy);
+		}
+
+		//functions needed for loading the webpage
+		window.onload = function() {
+
+			getData();
+
+			a = document.getElementsByName("new/total");
+			b = document.getElementsByName("orderFrom");
+			c = document.getElementsByName("orderBy");
+
+			for(i = 0; i < 2; i++){
+				a[i].onchange = function() { sortArray(); }
+				b[i].onchange = function() { sortArray(); }
+				c[i].onchange = function() { sortArray(); }
+			
+			}
+
+			c[2].onchange = function() { sortArray();}
+
+		}
+
+
+	</script>
+</head>
+
+
+<!-- <body onload="getData()"> -->
+<body>
+
+	<header id="header">
+		<a href="#footer">Jump to Content Questions</a>
+		<h1>Covid API</h1>
+	</header>
+
+	<form>
+		<h2 class="formH2">Display As:</h2>
+
+		<input type="radio" name="new/total" checked="true"">Total
+		<input type="radio" name="new/total"">New
+		<br>
+
+		<h2 class="formH2">Order From:</h2>
+
+		<input type="radio" name="orderFrom" checked="true">Most
+		<input type="radio" name="orderFrom">Least
+		<br>
+
+		<h2 class="formH2">Order By:  &nbsp;</h2>
+
+		<input type="radio" name="orderBy" checked="true">Confirmed Cases
+		<input type="radio" name="orderBy">Deaths
+		<input type="radio" name="orderBy">Recovered
+		<br>
+	</form>
+
+	<ul id="data">Loading...</ul>
+
+	<footer id="footer">
+		<h2>Content Questions</h2>
+		<p>The API I selected was a Covid19 API, and I choose the summary that gives various data points of Covid Cases in different countries around the world. There are other features, but I only use the summary feature for basic statistics in each country </p>
+		<p>API Source: <a href="https://api.covid19api.com/summary" target="_blank">https://api.covid19api.com/summary/</a> <br> This was found from the website <a href="https://covid19api.com/" target="_blank">https://covid19api.com/</a> <br> I found this website from the list of Public API from canvas: <a href="https://github.com/public-apis/public-apis" target="_blank">https://github.com/public-apis/public-apis</a></p>
+		<p>The option I used for the API request was adding /summary, so that I would only get a subsection of all the data available. Besides this, I did not require any other options for the data I was looking for.</p>
+		<p>This API would be useful for the purpose I created, where you can visualize this data and see where there are many cases and where cases are rising. This API could also be used to easily see which countries are handling the pandemic better than others, and thus other countries can learn from them.</p>
+		<a href="#header">Back to Top</a>
+	<footer>
+
+</body>
+</html>
